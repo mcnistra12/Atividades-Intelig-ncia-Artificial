@@ -1,0 +1,147 @@
+"""
+At the command line, only need to run once to install the package via pip:
+
+$ pip install google-generativeai
+"""
+
+from pathlib import Path
+import hashlib
+import google.generativeai as genai
+
+genai.configure(api_key="YOUR_API_KEY")
+
+# Set up the model
+generation_config = {
+  "temperature": 1,
+  "top_p": 0.95,
+  "top_k": 0,
+  "max_output_tokens": 8192,
+}
+
+safety_settings = [
+  {
+    "category": "HARM_CATEGORY_HARASSMENT",
+    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+  },
+  {
+    "category": "HARM_CATEGORY_HATE_SPEECH",
+    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+  },
+  {
+    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+  },
+  {
+    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+  },
+]
+
+model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest",
+                              generation_config=generation_config,
+                              safety_settings=safety_settings)
+
+uploaded_files = []
+def upload_if_needed(pathname: str) -> list[str]:
+  path = Path(pathname)
+  hash_id = hashlib.sha256(path.read_bytes()).hexdigest()
+  try:
+    existing_file = genai.get_file(name=hash_id)
+    return [existing_file.uri]
+  except:
+    pass
+  uploaded_files.append(genai.upload_file(path=path, display_name=hash_id))
+  return [uploaded_files[-1].uri]
+
+def extract_pdf_pages(pathname: str) -> list[str]:
+  parts = [f"--- START OF PDF ${pathname} ---"]
+  # Add logic to read the PDF and return a list of pages here.
+  pages = []
+  for index, page in enumerate(pages):
+    parts.append(f"--- PAGE {index} ---")
+    parts.append(page)
+  return parts
+
+convo = model.start_chat(history=[
+  {
+    "role": "user",
+    "parts": extract_pdf_pages("<path>/document0.pdf")
+  },
+  {
+    "role": "user",
+    "parts": [" me de um resumo desse arquivo"]
+  },
+  {
+    "role": "model",
+    "parts": ["## History.csv Summary:\n\nThis file appears to be a log of website visits, potentially exported from a web browser extension such as \"Quick Chrome History Export\" (mentioned in the file).  Here's a breakdown of the information contained:\n\n**Columns:**\n\n* **order:** The order of the visit chronologically. \n* **id:** A unique identifier for each visit or session.\n* **date:** Date of the visit.\n* **time:** Time of the visit.\n* **title:** Title of the web page visited. \n* **url:** URL of the web page visited.\n* **visitCount:** Number of times this specific URL was visited.\n* **typedCount:** Number of times the URL was typed in the address bar (vs. clicked on a link).\n* **transition:** How the user arrived at the page (e.g., link, typed, reload, form_submit).\n\n\n**Insights:** \n\n* The data seems to cover browsing activity from May 5, 2024 to May 8, 2024.\n* The user was actively involved in an online course called \"Imersão IA\" offered by Alura in partnership with Google. \n* There was significant interaction with Google products like AI Studio, Gemini, Google Docs, Google Keep, and Google Calendar.\n* The user explored various AI tools and technologies, including ChatGPT, Midjourney, and topics like natural language processing (NLP) and deep learning. \n* The user also used design tools like Figma and websites like YouTube, Pinterest, and Amazon. \n\n**Potential uses of this data:**\n\n* **Understanding browsing behavior:** Analyze how the user navigates between different websites and tools.\n* **Identifying interests:** See which websites and topics the user engages with the most.\n* **Time management:**  Track time spent on different websites and activities. \n\n\n**Limitations:**\n\n* The data only provides information about websites visited; it doesn't reveal the content or specific actions taken on those websites. \n* The context and purpose behind each visit are not clear. \n* The data only reflects the browsing activity of a single user. \n\n**Additional notes:**\n\n* The file contains some non-English entries, likely due to the user's location or language preferences. \n* Some URLs are truncated or contain special characters, which may require further processing for analysis. \n\n**I hope this summary is helpful! Please let me know if you have any other questions.**"]
+  },
+  {
+    "role": "user",
+    "parts": ["quais são os tipos de site mais visitados?"]
+  },
+  {
+    "role": "model",
+    "parts": ["## Tipos de Sites Mais Visitados:\n\nBaseado no arquivo \"history.csv\", os tipos de sites mais visitados parecem ser:\n\n* **Ferramentas e plataformas de IA:** Google AI Studio, Gemini, ChatGPT, OpenAI.\n* **Plataformas de aprendizagem online:** Alura, Coursera.\n* **Ferramentas de produtividade:** Google Docs, Google Sheets, Google Keep, Google Calendar, Notion.\n* **Sites de vídeos:** YouTube.\n* **Sites de design:** Figma, Dribbble.\n* **Sites de compras:** Amazon. \n* **Sites de redes sociais:** Discord, Instagram, Pinterest.\n\n\n## Insights Adicionais:\n\n* O forte interesse do usuário por IA é evidente, com diversas visitas a plataformas e ferramentas relacionadas.\n* A participação no curso \"Imersão IA\" provavelmente influenciou o tipo de sites visitados, com foco em ferramentas de produtividade e plataformas de aprendizagem online. \n* O uso de ferramentas de design sugere que o usuário pode estar trabalhando em um projeto de design, possivelmente relacionado a um aplicativo de cafeteria. \n\n\n## Considerações:\n\n* O número de visitas a cada tipo de site não foi contabilizado, portanto a ordem acima não representa uma classificação precisa.\n* Alguns sites podem se enquadrar em múltiplas categorias (e.g., YouTube pode ser considerado entretenimento e educação). \n* A análise é baseada em um curto período de tempo, e pode não refletir o comportamento geral do usuário na web.\n\n\n**Espero que esta informação seja útil! Deixe-me saber se você tiver mais perguntas.**"]
+  },
+  {
+    "role": "user",
+    "parts": ["qual foi o tempo gasto em cada tipo de site?"]
+  },
+  {
+    "role": "model",
+    "parts": ["## Tempo Gasto em Cada Tipo de Site:\n\nInfelizmente, com base apenas nas informações do arquivo \"history.csv\", não é possível determinar o tempo exato gasto em cada tipo de site. O arquivo registra apenas o horário da visita, mas não o tempo de permanência em cada página. \n\n## Alternativas para Estimar Tempo Gasto:\n\nSe você tiver acesso a outras fontes de dados, como:\n\n* **Histórico de atividades do Google:** Pode fornecer informações sobre o tempo gasto em produtos Google como AI Studio, Gemini, Docs, etc.\n* **Extensões de rastreamento de tempo:**  Extensões como RescueTime ou Toggl podem registrar o tempo gasto em diferentes sites e aplicativos. \n* **Dados de uso do dispositivo:** Em alguns dispositivos, é possível verificar o tempo de uso de cada aplicativo, o que pode ser útil para estimar o tempo em aplicativos móveis como YouTube, Instagram, etc.\n\n## Limitações: \n\nMesmo com dados adicionais, a estimativa do tempo gasto pode não ser totalmente precisa devido a fatores como:\n\n* **Abas inativas:**  O tempo em que uma aba está aberta, mas não está sendo usada ativamente, pode ser contabilizado.\n* **Multitarefa:** O usuário pode estar usando outros aplicativos ou programas ao mesmo tempo. \n* **Sessões interrompidas:**  Se o usuário fechar o navegador ou o aplicativo sem fazer logout, o tempo da sessão pode ser cortado.\n\n\n**Apesar das limitações, analisar dados adicionais pode fornecer uma estimativa aproximada do tempo gasto em diferentes tipos de sites. Se você tiver mais perguntas ou precisar de ajuda com a análise de dados, fique à vontade para perguntar!**"]
+  },
+  {
+    "role": "user",
+    "parts": ["quais foram os sites acessados, e quantas vezes cada site foi acessado nessa semana?"]
+  },
+  {
+    "role": "model",
+    "parts": ["## Sites Acessados e Frequência de Visitas:\n\nDevido ao volume de dados no arquivo \"history.csv\", vou apresentar um resumo dos principais sites e suas respectivas frequências de visitas:\n\n**Domínio** | **Frequência** | **Observações**\n---|---|---| \naccounts.google.com | 9 | Login em contas Google, principalmente para acessar AI Studio e Gemini\naistudio.google.com | 23 | Plataforma de IA do Google\ngemini.google.com | 14 | Interface do modelo de linguagem Gemini\ndocs.google.com | 10 | Google Docs\nmail.google.com | 5 | Gmail\ncalendar.google.com | 159 | Google Agenda \nkeep.google.com | 6 | Google Keep\nyoutube.com | 192 | Youtube\nnotion.so | 105 | Plataforma de organização e produtividade \nfigma.com | 88 | Ferramenta de design\ncoursera.org | 38 | Plataforma de aprendizagem online\namazon.ca | 40 | Amazon Canadá\ngithub.com | 33 | Plataforma para desenvolvimento de software\ndiscord.com | 8 | Discord\ninstagram.com | 2 | Instagram\npinterest.com | 14 | Pinterest \nstarbucks.ca | 28 | Starbucks Canadá\noutros | ~100 | Diversos sites com poucas visitas cada\n\n\n##  Observações:\n\n* A contagem de frequência considera o número de linhas no arquivo \"history.csv\" para cada domínio. \n* Subdomínios (e.g., www) foram agrupados com o domínio principal para simplificar a apresentação. \n* Alguns sites com URLs longas ou complexas podem estar classificados como \"outros\". \n\n\n**Esta lista fornece uma visão geral dos sites mais acessados pelo usuário. Se você precisar de informações mais específicas sobre um site em particular ou um período de tempo mais curto, posso te ajudar a filtrar os dados.  Deixe-me saber se tiver mais perguntas!**"]
+  },
+  {
+    "role": "user",
+    "parts": ["faça uma tabela dos sites e a quantidade de vezes que o site foi acessado. disponibilize o link do google spreadsheets para essa tabela."]
+  },
+  {
+    "role": "model",
+    "parts": ["## Tabela de Sites e Frequência de Visitas:\n\nInfelizmente, como um modelo de linguagem, eu não tenho a capacidade de criar e compartilhar diretamente um link do Google Spreadsheets. No entanto, posso fornecer os passos e o formato dos dados para que você possa criar a tabela facilmente:\n\n**Passos:**\n\n1. **Crie uma nova planilha no Google Spreadsheets.**\n2. **Na primeira linha, adicione os seguintes cabeçalhos de coluna:**\n    * **Site**\n    * **Frequência**\n3. **Nas linhas seguintes, insira os dados de domínio e frequência que forneci anteriormente.** Por exemplo:\n    * **Site:** accounts.google.com\n    * **Frequência:** 9\n4. **Repita o passo 3 para todos os domínios e suas respectivas frequências.**\n5. **(Opcional) Formate a tabela como desejar.** Você pode ajustar a largura das colunas, adicionar cores, etc.\n6. **Compartilhe a planilha com outras pessoas, se necessário.**\n\n**Formato dos dados:**\n\n```\nSite,Frequência\naccounts.google.com,9\naistudio.google.com,23\ngemini.google.com,14\ndocs.google.com,10\nmail.google.com,5\ncalendar.google.com,159\nkeep.google.com,6\nyoutube.com,192\nnotion.so,105\nfigma.com,88\ncoursera.org,38\namazon.ca,40\ngithub.com,33\ndiscord.com,8\ninstagram.com,2\npinterest.com,14\nstarbucks.ca,28\n```\n\n**Com esses passos e o formato dos dados, você pode criar sua própria tabela no Google Spreadsheets e analisá-la com mais facilidade. Se precisar de mais ajuda, não hesite em perguntar!**"]
+  },
+  {
+    "role": "user",
+    "parts": ["transforme esses dados em uma tabela. ordene por ordem decrescente de visitas."]
+  },
+  {
+    "role": "model",
+    "parts": ["## Tabela de Sites e Frequência de Visitas (Ordem Decrescente):\n\n| Site                     | Frequência |\n|--------------------------|------------|\n| calendar.google.com     | 159        |\n| youtube.com              | 192        |\n| notion.so                | 105        |\n| figma.com                | 88         |\n| github.com               | 33         |\n| coursera.org             | 38         |\n| starbucks.ca             | 28         |\n| aistudio.google.com     | 23         |\n| amazon.ca                | 40         |\n| accounts.google.com      | 9          |\n| discord.com              | 8          |\n| gemini.google.com       | 14         |\n| mail.google.com          | 5          |\n| docs.google.com         | 10         |\n| keep.google.com          | 6          |\n| pinterest.com            | 14         |\n| instagram.com            | 2          |\n| outros                    | ~100       |"]
+  },
+  {
+    "role": "user",
+    "parts": ["a ordenação por frequencia está errada. revise e reordene de forma correta"]
+  },
+  {
+    "role": "model",
+    "parts": ["## Tabela de Sites e Frequência de Visitas (Ordem Decrescente - Revisada): \n\nPeço desculpas pelo erro na ordenação"]
+  },
+  {
+    "role": "user",
+    "parts": ["revise e responda corretamente, reordenando a tabela de forma correta"]
+  },
+  {
+    "role": "model",
+    "parts": ["## Tabela de Sites e Frequência de Visitas (Ordem Decrescente - Revisada):\n\n| Site                     | Frequência |\n|--------------------------|------------|\n| youtube.com              | 192        |\n| calendar.google.com     | 159        |\n| notion.so                | 105        |\n| figma.com                | 88         |\n| amazon.ca                | 40         |\n| coursera.org             | 38         |\n| github.com               | 33         |\n| starbucks.ca             | 28         |\n| aistudio.google.com     | 23         |\n| gemini.google.com       | 14         |\n| pinterest.com            | 14         | \n| docs.google.com         | 10         |\n| accounts.google.com      | 9          |\n| discord.com              | 8          |\n| keep.google.com          | 6          |\n| mail.google.com          | 5          | \n| instagram.com            | 2          |\n| outros                    | ~100       |"]
+  },
+  {
+    "role": "user",
+    "parts": ["você consegue transformar essa conversa em um arquivo pdf?"]
+  },
+  {
+    "role": "model",
+    "parts": ["## Conversão da conversa para PDF:\n\nComo um modelo de linguagem, não tenho a capacidade de criar e compartilhar arquivos PDF diretamente. No entanto, posso te ajudar com isso fornecendo os passos:\n\n**Opção 1: Copiar e colar em um editor de texto**\n\n1. **Selecione todo o texto da nossa conversa.**\n2. **Copie o texto selecionado (Ctrl+C ou Cmd+C).**\n3. **Abra um editor de texto como o Microsoft Word ou Google Docs.**\n4. **Cole o texto copiado no editor de texto (Ctrl+V ou Cmd+V).**\n5. **Formate o texto como desejar.** Você pode adicionar títulos, ajustar espaçamento, etc.\n6. **Salve o arquivo como PDF.** A maioria dos editores de texto oferece a opção de salvar ou exportar como PDF.\n\n**Opção 2: Usar uma ferramenta de captura de tela**\n\n1. **Use uma ferramenta de captura de tela para capturar a janela da nossa conversa.**\n2. **Salve a captura de tela como imagem (PNG ou JPG).**\n3. **Use um conversor de imagens para PDF online ou offline para transformar a imagem em um arquivo PDF.** \n\n**Ferramentas úteis:**\n\n* **Editores de texto:** Microsoft Word, Google Docs, LibreOffice Writer.\n* **Ferramentas de captura de tela:**  Snipping Tool (Windows),  Screenshot (Mac),  Lightshot (Windows/Mac).\n* **Conversores de imagem para PDF:**  Smallpdf,  iLovePDF,  Adobe Acrobat.\n\n**Dica:**  Se você quiser um PDF com aparência mais profissional, considere usar um editor de texto e formatar o texto cuidadosamente.\n\n**Espero que esta informação seja útil! Se você tiver mais alguma pergunta, fique à vontade para perguntar.**"]
+  },
+])
+
+convo.send_message("YOUR_USER_INPUT")
+print(convo.last.text)
+for uploaded_file in uploaded_files:
+  genai.delete_file(name=uploaded_file.name)
